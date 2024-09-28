@@ -5,7 +5,12 @@ A Terminator plugin to implement AutoTheme:
 
 https://github.com/gnome-terminator/terminator/issues/775
 
-## requirements
+## Feature
+- auto switch profile when system light/dark change
+- quick preview different profiles (without tedious clicks)  
+ //just mouse-scroll or  keyboard <kbd>↑</kbd>  <kbd>↓</kbd> on the combox
+
+## Requirements
 
 only tested with terminator 2.1.1+, on ubuntu 22 lts
 
