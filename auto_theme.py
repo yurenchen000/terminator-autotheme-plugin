@@ -23,7 +23,7 @@ from terminatorlib.terminator import Terminator
 AVAILABLE = ['AutoTheme']
 
 ## disable log
-# print = lambda *a:None
+print = lambda *a:None
 
 """Terminator Plugin AutoTheme"""
 class AutoTheme(plugin.MenuItem):
