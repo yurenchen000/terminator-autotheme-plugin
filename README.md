@@ -15,7 +15,12 @@ only tested with terminator 2.1.1+, on ubuntu 22 lts
 2. Terminator Preferences > Plugins: enable `AutoTheme`
 
 ## Usage
-you need 2 terminator profile, named `light` and `dark`,  
+you need at least 2 terminator profile,  
+  one for dark theme  
+  one for light theme  
+
 It will auto switch when system dark/light mode swtich.
 
+## Preview
 
+![plugin_preview.png](https://i.imgur.com/q1pUomB.png)
