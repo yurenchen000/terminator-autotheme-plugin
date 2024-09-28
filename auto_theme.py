@@ -30,8 +30,8 @@ class AutoTheme(plugin.MenuItem):
     """Add custom commands to the terminal menu"""
     capabilities = ['terminal_menu']
 
-    dark = ''
     light = ''
+    dark = ''
     mode = ''
     list = []
 
@@ -40,7 +40,7 @@ class AutoTheme(plugin.MenuItem):
         self.__class__.load_config()
         self.setup_theme_monitor()
 
-    ## on menu_show  // it not really need context-menu
+    ## on menu_show
     def callback(self, menuitems, menu, terminal):
         item = Gtk.CheckMenuItem(_(' -  AutoTheme'))
         # item.set_active(True)
@@ -59,79 +59,64 @@ class AutoTheme(plugin.MenuItem):
         def _on_theme_name_changed(settings, gparam):
             theme_name = settings.get_property('gtk-theme-name')
             theme_variant = settings.get_property('gtk-application-prefer-dark-theme')
-            print('--on_theme_name change:', theme_name, theme_variant)
+            print('== on_theme_name change:', theme_name, theme_variant)
             is_dark = 'dark' in theme_name
             AutoTheme.change_theme(is_dark)
 
         Gtk.Settings.get_default().connect("notify::gtk-theme-name", _on_theme_name_changed)
 
-    @staticmethod
-    def change_theme(isdark):
-        terminator = plugin.Terminator()
-        ts = terminator.terminals
-        # theme = '_light2' if isdark else '_light_day'
-        theme = AutoTheme.dark if isdark else AutoTheme.light
 
-        print('--change_theme:', isdark, theme)
+    @staticmethod
+    def apply_theme(name):
+        terminator = plugin.Terminator()
         # print('---terminals:', len(ts), ts)
         for term in terminator.terminals:
             # print('term:', term)
-            term.set_profile(term.get_vte(), theme)
-  
+            term.set_profile(term.get_vte(), name)
+
+    @staticmethod
+    def change_theme(isdark):
+        # theme = '_light2' if isdark else '_light_day'
+        theme = AutoTheme.dark if isdark else AutoTheme.light
+        print('--change_theme:', isdark, theme)
+        AutoTheme.apply_theme(theme)
 
     @classmethod
-    def save_config(cls, light_sel, dark_sel, mode_sel):
-        cfg = {}
-        cfg['light'] = light_sel
-        cfg['dark'] = dark_sel
-        cfg['mode'] = mode_sel
+    def save_config(cls, light, dark, mode):
+        print('=== save_config:', light, dark, mode)
+        cls.light = light
+        cls.dark  = dark
+        cls.mode  = mode
 
-        cls.light = light_sel
-        cls.dark  = dark_sel
-        cls.mode  = mode_sel
-
+        cfg = {'light': light, 'dark': dark, 'mode': mode}
         config = Config()
         config.plugin_set_config(cls.__name__, cfg)
         config.save()
 
     @classmethod
     def load_config(cls):
-        config = Config()                                           
-        cfg = config.plugin_get_config(cls.__name__)
-        print('--- config:', cfg)
-
-        if cfg:
-            light_sel = cfg.get('light', '')
-            dark_sel  = cfg.get('dark', '')
-            model_sel = cfg.get('mode', 'Auto')
-            print('==cur sel:', light_sel, dark_sel, model_sel)
-
-            cls.dark  = dark_sel
-            cls.light = light_sel
-            cls.mode  = model_sel
+        cur_profile = plugin.Terminator().terminals[0].get_profile()
+        cfg = Config().plugin_get_config(cls.__name__) or {}
+        print('--- load_config:', cfg)
+        cls.light = cfg.get('light', cur_profile)
+        cls.dark  = cfg.get('dark',  cur_profile)
+        cls.mode  = cfg.get('mode', 'Auto')
+        print('=== load_config:', cls.light, cls.dark, cls.mode)
 
     @classmethod
     def do_menu_toggle(cls, _widget, terminal):
         terminator = plugin.Terminator()
-        profiles = terminator.config.list_profiles()
-        cls.list = profiles
-        print('profiles:', profiles)
+        cls.list = terminator.config.list_profiles()
+        print('profiles:', cls.list)
         cls.load_config()
 
         dialog = MySettingDialog(None)
-        dialog.set_list(profiles)
-
-        # dialog.set_list_sel(1,2)
-        # dialog.set_list_sel(0,1)
+        dialog.set_list(cls.list)
         dialog.set_list_sel(cls.light, cls.dark)
         dialog.set_mode_sel(cls.mode)
 
         response = dialog.run()
-
         if response == Gtk.ResponseType.OK:
-            print('Light sel:', dialog.light_sel)
-            print('Dark  sel:', dialog.dark_sel)
-            print('Mode  sel:', dialog.mode_sel)
             cls.save_config(dialog.light_sel, dialog.dark_sel, dialog.mode_sel)
 
         dialog.destroy()
@@ -169,14 +154,14 @@ class MySettingDialog(Gtk.Dialog):
 
         ## --------- col0: plain label
         light_label = Gtk.Label(label="Light")
-        dark_label = Gtk.Label(label="Dark")
+        dark_label  = Gtk.Label(label="Dark")
         grid.attach(dark_label,  0, 1, 1, 1)
         grid.attach(light_label, 0, 0, 1, 1)
 
         light_label.set_name('light_label')
         dark_label.set_name('dark_label')
-        self.light_label = light_label
-        self.dark_label  = dark_label
+        # self.light_label = light_label
+        # self.dark_label  = dark_label
 
         ## --------- col1: profile combo
         # Light combo box
@@ -264,6 +249,7 @@ class MySettingDialog(Gtk.Dialog):
             self.radio_light.set_active(True)
         else:
             self.radio_dark.set_active(True)
+            # self.radio_dark.active = True
 
     def add_css(self):
         css = b"""
@@ -288,16 +274,15 @@ class MySettingDialog(Gtk.Dialog):
 
     def on_radio_button_toggled(self, widget):
         if widget.get_active():
+            print('-- mode selected:', widget.get_label())
+            # unsel = 'Light' if self.mode_sel=='Dark' else 'Dark'
             self.mode_sel = widget.get_label()
-            print(f"- radio selected: {widget.get_label()}")
-            unsel = 'Light' if self.mode_sel=='Dark' else 'Dark'
-            self.box.set_name(self.mode_sel)
-
+            self.box.set_name(self.mode_sel) # css active
 
     def on_dialog_response(self, dialog, response_id):
-        print('== on response:', response_id)
+        # print('== on response:', response_id)
         self.light_sel = self.light_combo.get_active_text()
-        self.dark_sel = self.dark_combo.get_active_text()
+        self.dark_sel  = self.dark_combo.get_active_text()
         if response_id == Gtk.ResponseType.OK:
             pass
         # elif response_id == Gtk.ResponseType.CANCEL:
