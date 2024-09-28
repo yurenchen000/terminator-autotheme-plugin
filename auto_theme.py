@@ -110,10 +110,10 @@ class AutoTheme(plugin.MenuItem):
         print('profiles:', cls.list)
         cls.load_config()
 
-        dialog = MySettingDialog(None)
-        dialog.set_list(cls.list)
-        dialog.set_list_sel(cls.light, cls.dark)
-        dialog.set_mode_sel(cls.mode)
+        dialog = MySettingDialog(None, cls)
+        # dialog.set_list(cls.list)
+        # dialog.set_list_sel(cls.light, cls.dark)
+        # dialog.set_mode_sel(cls.mode)
 
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
@@ -123,13 +123,14 @@ class AutoTheme(plugin.MenuItem):
 
 
 class MySettingDialog(Gtk.Dialog):
-    def __init__(self, parent):
+    def __init__(self, parent, mgr):
         super().__init__(title="Auto Theme Setting", parent=parent, flags=0)
 
         self.light_sel = ''
         self.dark_sel = ''
         self.mode_sel = ''
         self.list = []
+        self.mgr = mgr
 
         box = self.get_content_area()
         self.box = box
@@ -211,7 +212,16 @@ class MySettingDialog(Gtk.Dialog):
         grid.attach(mode_label, 0, 3, 1, 1)
         grid.attach(button_box, 1, 3, 1, 1)
 
+        ### --------- init values
+        self.set_list(mgr.list)
+        self.set_list_sel(mgr.light, mgr.dark)
+        self.set_mode_sel(mgr.mode)
+
         ### --------- radio onchange
+
+        self.light_combo.connect('changed', self.on_light_combo_change)
+        self.dark_combo.connect('changed',  self.on_dark_combo_change)
+
         # In the __init__ method, connect the toggle signal
         self.radio_light.connect("toggled", self.on_radio_button_toggled)
         self.radio_dark.connect("toggled",  self.on_radio_button_toggled)
@@ -271,6 +281,15 @@ class MySettingDialog(Gtk.Dialog):
         context = Gtk.StyleContext()
         screen = Gdk.Screen.get_default()
         context.add_provider_for_screen(screen, css_provider, Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
+
+    def on_light_combo_change(self, widget):
+        theme = widget.get_active_text()
+        print('-- light selected:', theme)
+        self.mgr.apply_theme(theme)
+    def on_dark_combo_change(self, widget):
+        theme = widget.get_active_text()
+        print('-- dark selected:', theme)
+        self.mgr.apply_theme(theme)
 
     def on_radio_button_toggled(self, widget):
         if widget.get_active():
