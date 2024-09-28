@@ -67,6 +67,15 @@ class AutoTheme(plugin.MenuItem):
 
 
     @staticmethod
+    def is_dark_theme():
+        settings = Gtk.Settings.get_default()
+        theme_name = settings.get_property('gtk-theme-name')
+        theme_variant = settings.get_property('gtk-application-prefer-dark-theme')
+        print('--theme_name:', theme_name, theme_variant)
+        is_dark = 'dark' in theme_name
+        return is_dark
+
+    @staticmethod
     def apply_theme(name):
         terminator = plugin.Terminator()
         # print('---terminals:', len(ts), ts)
@@ -253,8 +262,11 @@ class MySettingDialog(Gtk.Dialog):
             self.dark_combo.set_active(self.list.index(val2))
 
     def set_mode_sel(self, val1):
+        self.box.set_name(val1) # css active
         if val1 == 'Auto':
             self.radio_auto.set_active(True)
+            theme_mode = 'Dark' if self.mgr.is_dark_theme() else 'Light'
+            self.box.set_name(theme_mode) # css active
         elif val1 == 'Light':
             self.radio_light.set_active(True)
         else:
@@ -268,7 +280,8 @@ class MySettingDialog(Gtk.Dialog):
         }
         #Dark  #dark_label,
         #Light #light_label {
-            background-color: green;
+            /* background-color: green; */
+            background-color: rgba(0, 255, 0, 0.2);
             /* color: green; */
             border-radius: 8px;
             padding: 0px 15px;
@@ -297,6 +310,14 @@ class MySettingDialog(Gtk.Dialog):
             # unsel = 'Light' if self.mode_sel=='Dark' else 'Dark'
             self.mode_sel = widget.get_label()
             self.box.set_name(self.mode_sel) # css active
+
+            theme_mode = self.mode_sel
+            if self.mode_sel == 'Auto':
+                theme_mode = 'Dark' if self.mgr.is_dark_theme() else 'Light'
+                self.box.set_name(theme_mode) # css active
+
+            theme_name = self.dark_combo.get_active_text() if theme_mode == 'Dark' else self.light_combo.get_active_text()
+            self.mgr.apply_theme(theme_name)
 
     def on_dialog_response(self, dialog, response_id):
         # print('== on response:', response_id)
