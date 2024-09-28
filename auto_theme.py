@@ -34,6 +34,7 @@ class AutoTheme(plugin.MenuItem):
     dark = ''
     mode = ''
     list = []
+    change_cb = None
 
     def __init__(self):
         plugin.MenuItem.__init__(self)
@@ -62,6 +63,8 @@ class AutoTheme(plugin.MenuItem):
             print('== on_theme_name change:', theme_name, theme_variant)
             is_dark = 'dark' in theme_name
             AutoTheme.change_theme(is_dark)
+            if callable(AutoTheme.change_cb):
+                AutoTheme.change_cb(is_dark)
 
         Gtk.Settings.get_default().connect("notify::gtk-theme-name", _on_theme_name_changed)
 
@@ -227,6 +230,7 @@ class MySettingDialog(Gtk.Dialog):
         self.set_list_sel(mgr.light, mgr.dark)
         self.set_mode_sel(mgr.mode)
 
+        mgr.change_cb = self.change_cb
         ### --------- radio onchange
 
         self.light_combo.connect('changed', self.on_light_combo_change)
@@ -305,6 +309,11 @@ class MySettingDialog(Gtk.Dialog):
         print('-- dark selected:', theme)
         self.mgr.apply_theme(theme)
 
+    def change_cb(self, is_dark):
+        print('-- change_cb:', is_dark)
+        theme_mode = 'Dark' if is_dark else 'Light'
+        self.box.set_name(theme_mode) # css active
+
     def on_radio_button_toggled(self, widget):
         if widget.get_active():
             print('-- mode selected:', widget.get_label())
@@ -322,6 +331,7 @@ class MySettingDialog(Gtk.Dialog):
 
     def on_dialog_response(self, dialog, response_id):
         # print('== on response:', response_id)
+        self.mgr.change_cb = None
         self.light_sel = self.light_combo.get_active_text()
         self.dark_sel  = self.dark_combo.get_active_text()
         if response_id == Gtk.ResponseType.OK:
