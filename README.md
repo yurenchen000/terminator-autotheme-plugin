@@ -1,6 +1,6 @@
 # Terminator AutoTheme Plugin
 
-A Terminator plugin to implement AutoTheme:
+A Terminator plugin to implement AutoTheme:  
   Let profile follow system Dark/Light mode (when system theme change).
 
 https://github.com/gnome-terminator/terminator/issues/775
