@@ -201,6 +201,7 @@ class MySettingDialog(Gtk.Dialog):
         self.radio_dark  = Gtk.RadioButton.new_with_label_from_widget(self.radio_light, "Dark")
         self.radio_auto  = Gtk.RadioButton.new_with_label_from_widget(self.radio_light, "Auto")
 
+        self.radio_auto.set_tooltip_text('follow system theme')
         self.radio_light.set_mode(False)
         self.radio_dark.set_mode(False)
         self.radio_auto.set_mode(False)
