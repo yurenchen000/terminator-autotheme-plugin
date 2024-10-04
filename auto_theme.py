@@ -110,13 +110,13 @@ class AutoTheme(plugin.MenuItem):
         AutoTheme.apply_theme(theme)
 
     @classmethod
-    def save_config(cls, light, dark, mode):
-        print('=== save_config:', light, dark, mode)
+    def save_config(cls, light, dark, mode, variant):
+        print('=== save_config:', light, dark, mode, variant)
         cls.light = light
         cls.dark  = dark
         cls.mode  = mode
-
-        cfg = {'light': light, 'dark': dark, 'mode': mode}
+        cls.variant = variant
+        cfg = {'light': light, 'dark': dark, 'mode': mode, 'variant': variant}
         config = Config()
         config.plugin_set_config(cls.__name__, cfg)
         config.save()
@@ -129,6 +129,7 @@ class AutoTheme(plugin.MenuItem):
         cls.light = cfg.get('light', cur_profile)
         cls.dark  = cfg.get('dark',  cur_profile)
         cls.mode  = cfg.get('mode', 'Auto')
+        cls.variant = cfg.get('variant', 'auto')
         print('=== load_config:', cls.light, cls.dark, cls.mode)
 
     @classmethod
@@ -145,7 +146,7 @@ class AutoTheme(plugin.MenuItem):
 
         response = dialog.run()
         if response == Gtk.ResponseType.OK:
-            cls.save_config(dialog.light_sel, dialog.dark_sel, dialog.mode_sel)
+            cls.save_config(dialog.light_sel, dialog.dark_sel, dialog.mode_sel, dialog.variant_sel)
 
         dialog.destroy()
 
@@ -244,25 +245,6 @@ class MySettingDialog(Gtk.Dialog):
 
 
         ### --------- row4: theme variant
-        ## NOTE: set_color_scheme will change notify::gtk-theme-name event behivor
-        def on_variant_button_toggled(widget):
-            if not widget.get_active():
-                return
-            scheme = widget.get_label().lower()
-            style_manager = Handy.StyleManager.get_default()
-
-            print('--on_variant_change:', scheme)
-            self.mgr.teardown_theme_monitor()  ## don't mess up with terminal profile
-
-            if scheme == 'light':  ## will mess up on_theme_change values
-                style_manager.set_color_scheme(Handy.ColorScheme.FORCE_LIGHT)
-            elif scheme == 'dark':
-                style_manager.set_color_scheme(Handy.ColorScheme.FORCE_DARK)
-            else:  ## system
-                style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
-
-            self.mgr.setup_theme_monitor()
-
         #### ---- use radio
         self.variant_light = Gtk.RadioButton.new_with_label_from_widget(None, "Light")
         self.variant_dark  = Gtk.RadioButton.new_with_label_from_widget(self.variant_light, "Dark")
@@ -291,15 +273,16 @@ class MySettingDialog(Gtk.Dialog):
         grid.attach(button_box2, 1, 4, 1, 1)
         grid.attach(theme_label, 0, 4, 1, 1)
 
-        self.variant_light.connect("toggled", on_variant_button_toggled)
-        self.variant_dark.connect( "toggled", on_variant_button_toggled)
-        self.variant_auto.connect( "toggled", on_variant_button_toggled)
+        self.variant_light.connect("toggled", self.on_variant_button_toggled)
+        self.variant_dark.connect( "toggled", self.on_variant_button_toggled)
+        self.variant_auto.connect( "toggled", self.on_variant_button_toggled)
 
 
         ### --------- init values
         self.set_list(mgr.list)
         self.set_list_sel(mgr.light, mgr.dark)
         self.set_mode_sel(mgr.mode)
+        self.set_variant_sel(mgr.variant)
 
         mgr.change_cb = self.change_cb
         ### --------- radio onchange
@@ -348,6 +331,14 @@ class MySettingDialog(Gtk.Dialog):
         else:
             self.radio_dark.set_active(True)
             # self.radio_dark.active = True
+
+    def set_variant_sel(self, scheme):
+        if scheme == 'light':
+            self.variant_light.set_active(True)
+        elif scheme == 'dark':
+            self.variant_dark.set_active(True)
+        else:
+            self.variant_auto.set_active(True)
 
     def add_css(self):
         css = b"""
@@ -399,6 +390,26 @@ class MySettingDialog(Gtk.Dialog):
 
             theme_name = self.dark_combo.get_active_text() if theme_mode == 'Dark' else self.light_combo.get_active_text()
             self.mgr.apply_theme(theme_name)
+
+    ## NOTE: set_color_scheme will change notify::gtk-theme-name event behivor
+    def on_variant_button_toggled(self, widget):
+        if not widget.get_active():
+            return
+        scheme = widget.get_label().lower()
+        style_manager = Handy.StyleManager.get_default()
+        self.variant_sel = scheme
+
+        print('--on_variant_change:', scheme)
+        self.mgr.teardown_theme_monitor()  ## don't mess up with terminal profile
+
+        if scheme == 'light':  ## will mess up on_theme_change values
+            style_manager.set_color_scheme(Handy.ColorScheme.FORCE_LIGHT)
+        elif scheme == 'dark':
+            style_manager.set_color_scheme(Handy.ColorScheme.FORCE_DARK)
+        else:  ## system
+            style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
+
+        self.mgr.setup_theme_monitor()
 
     def on_dialog_response(self, dialog, response_id):
         # print('== on response:', response_id)
