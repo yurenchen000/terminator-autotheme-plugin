@@ -48,9 +48,6 @@ class AutoTheme(plugin.MenuItem):
         self.__class__.load_config()
         self.setup_theme_monitor()
 
-        style_manager = Handy.StyleManager.get_default()
-        style_manager.set_color_scheme(self.__class__.to_variant(self.variant))
-
     ## on menu_show
     def callback(self, menuitems, menu, terminal):
         item = Gtk.CheckMenuItem(_(' -  AutoTheme'))
@@ -58,6 +55,18 @@ class AutoTheme(plugin.MenuItem):
         item.connect("toggled", self.do_menu_toggle, terminal)
         menuitems.append(item)
         # print('AutoTheme __init__..')
+
+        # AutoTheme.load_config()
+        ## load mode stat
+        mode = AutoTheme.mode=='Dark' or AutoTheme.mode=='Auto' and AutoTheme.is_dark_theme()
+        print('load mode:', mode)
+        AutoTheme.change_theme(mode)
+        
+        ## load variant stat
+        self.teardown_theme_monitor()  ## don't mess up with terminal profile
+        style_manager = Handy.StyleManager.get_default()
+        style_manager.set_color_scheme(AutoTheme.to_variant(AutoTheme.variant))
+        self.setup_theme_monitor()
 
     @staticmethod
     def setup_theme_monitor():
