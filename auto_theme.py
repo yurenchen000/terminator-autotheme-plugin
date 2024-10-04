@@ -136,7 +136,7 @@ class AutoTheme(plugin.MenuItem):
 
 class MySettingDialog(Gtk.Dialog):
     def __init__(self, parent, mgr):
-        super().__init__(title="Auto Theme Setting", parent=parent, flags=0)
+        super().__init__(title="Auto Theme Settings", parent=parent, flags=0)
 
         self.light_sel = ''
         self.dark_sel = ''
