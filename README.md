@@ -18,6 +18,7 @@ only tested with terminator 2.1.1+, on ubuntu 22 lts
 
 1. Copy auto_theme.py to ~/.config/terminator/plugins/
 2. Terminator Preferences > Plugins: enable `AutoTheme`
+3. Settings in context-menu `AutoTheme`
 
 ## Usage
 you need at least 2 terminator profile,  
