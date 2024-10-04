@@ -19,6 +19,10 @@ from terminatorlib.util import dbg
 from terminatorlib.terminal import Terminal
 from terminatorlib.terminator import Terminator
 
+import gi
+gi.require_version('Handy', '1')
+from gi.repository import Handy
+
 # Every plugin you want Terminator to load *must* be listed in 'AVAILABLE'
 AVAILABLE = ['AutoTheme']
 
@@ -35,6 +39,8 @@ class AutoTheme(plugin.MenuItem):
     mode = ''
     list = []
     change_cb = None
+
+    conn_handle = None
 
     def __init__(self):
         plugin.MenuItem.__init__(self)
@@ -53,21 +59,30 @@ class AutoTheme(plugin.MenuItem):
     def setup_theme_monitor():
         print('++ setup_theme_monit')
         settings = Gtk.Settings.get_default()
-        theme_name = settings.get_property('gtk-theme-name')
-        theme_variant = settings.get_property('gtk-application-prefer-dark-theme')
-        print('--theme_name:', theme_name, theme_variant)
+        # theme_name = settings.get_property('gtk-theme-name')
+        # theme_variant = settings.get_property('gtk-application-prefer-dark-theme')
+        # print('--theme_name:', theme_name, theme_variant)
 
         def _on_theme_name_changed(settings, gparam):
+            print('--_on_theme_name_changed:', settings, gparam)
             theme_name = settings.get_property('gtk-theme-name')
             theme_variant = settings.get_property('gtk-application-prefer-dark-theme')
             print('== on_theme_name change:', theme_name, theme_variant)
-            is_dark = 'dark' in theme_name
+            # is_dark = 'dark' in theme_name
+            is_dark = 'dark' in theme_name or theme_variant  ## set_color_scheme affect this
             AutoTheme.change_theme(is_dark)
             if callable(AutoTheme.change_cb):
                 AutoTheme.change_cb(is_dark)
 
-        Gtk.Settings.get_default().connect("notify::gtk-theme-name", _on_theme_name_changed)
+        if not AutoTheme.conn_handle:
+            AutoTheme.conn_handle = Gtk.Settings.get_default().connect("notify::gtk-theme-name", _on_theme_name_changed)
 
+    @staticmethod
+    def teardown_theme_monitor():
+        if AutoTheme.conn_handle:
+            print('-- teardown_theme_monit')
+            Gtk.Settings.get_default().disconnect(AutoTheme.conn_handle)
+            AutoTheme.conn_handle = None
 
     @staticmethod
     def is_dark_theme():
@@ -75,7 +90,8 @@ class AutoTheme(plugin.MenuItem):
         theme_name = settings.get_property('gtk-theme-name')
         theme_variant = settings.get_property('gtk-application-prefer-dark-theme')
         print('--theme_name:', theme_name, theme_variant)
-        is_dark = 'dark' in theme_name
+        # is_dark = 'dark' in theme_name
+        is_dark = 'dark' in theme_name or theme_variant  ## set_color_scheme affect this
         return is_dark
 
     @staticmethod
@@ -221,9 +237,86 @@ class MySettingDialog(Gtk.Dialog):
         button_box.pack_start(self.radio_auto,  True, True, 0)
 
         # Attach the button box to the grid
-        mode_label = Gtk.Label(label="Mode")
+        mode_label = Gtk.Label(label="Vte")
+        mode_label.set_tooltip_text('for terminal')
         grid.attach(mode_label, 0, 3, 1, 1)
         grid.attach(button_box, 1, 3, 1, 1)
+
+
+        ### --------- row4: theme variant
+        def on_variant_combox_changed(combo):
+            scheme = combo.get_active_text().lower()
+            style_manager = Handy.StyleManager.get_default()
+            print('--on_variant_change:', scheme)
+            if scheme == 'light':
+                style_manager.set_color_scheme(Handy.ColorScheme.FORCE_LIGHT)
+            elif scheme == 'dark':
+                style_manager.set_color_scheme(Handy.ColorScheme.FORCE_DARK)
+            else:  ## system
+                style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
+
+        ## NOTE: set_color_scheme will change notify::gtk-theme-name event behivor
+        def on_variant_button_toggled(widget):
+            if not widget.get_active():
+                return
+            scheme = widget.get_label().lower()
+            style_manager = Handy.StyleManager.get_default()
+
+            print('--on_variant_change:', scheme)
+            self.mgr.teardown_theme_monitor()  ## don't mess up with terminal profile
+
+            if scheme == 'light':  ## will mess up on_theme_change values
+                style_manager.set_color_scheme(Handy.ColorScheme.FORCE_LIGHT)
+            elif scheme == 'dark':
+                style_manager.set_color_scheme(Handy.ColorScheme.FORCE_DARK)
+            else:  ## system
+                style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
+
+            self.mgr.setup_theme_monitor()
+
+        #### ---- use combox
+        # variant_combo = Gtk.ComboBoxText()
+        # variant_combo.append_text("System")
+        # variant_combo.append_text("Light")
+        # variant_combo.append_text("Dark")
+        # variant_combo.set_active(0)
+        # variant_combo.connect("changed", on_variant_combox_changed)
+
+        #### ---- use radio
+        self.variant_light = Gtk.RadioButton.new_with_label_from_widget(None, "Light")
+        self.variant_dark  = Gtk.RadioButton.new_with_label_from_widget(self.variant_light, "Dark")
+        self.variant_auto  = Gtk.RadioButton.new_with_label_from_widget(self.variant_light, "Auto")
+
+        self.variant_auto.set_tooltip_text('follow system theme')
+        self.variant_light.set_mode(False)
+        self.variant_dark.set_mode(False)
+        self.variant_auto.set_mode(False)
+        self.variant_auto.set_active(True)
+
+        style_manager = Handy.StyleManager.get_default()
+        style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
+        # button_box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
+        button_box2 = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
+        # button_box2.set_layout(Gtk.ButtonBoxStyle.START)
+        button_box2.set_layout(Gtk.ButtonBoxStyle.EXPAND)
+        # button_box2.set_spacing(5)
+
+        # Pack buttons into the button box
+        button_box2.pack_start(self.variant_light, True, True, 0)
+        button_box2.pack_start(self.variant_dark,  True, True, 0)
+        button_box2.pack_start(self.variant_auto,  True, True, 0)
+
+        # vbox.pack_start(dark_theme_combo, False, True, 0)
+        theme_label = Gtk.Label(label="Gtk")
+        theme_label.set_tooltip_text('for UI')
+        # grid.attach(variant_combo, 1, 4, 1, 1)
+        grid.attach(button_box2, 1, 4, 1, 1)
+        grid.attach(theme_label, 0, 4, 1, 1)
+
+        self.variant_light.connect("toggled", on_variant_button_toggled)
+        self.variant_dark.connect( "toggled", on_variant_button_toggled)
+        self.variant_auto.connect( "toggled", on_variant_button_toggled)
+
 
         ### --------- init values
         self.set_list(mgr.list)
