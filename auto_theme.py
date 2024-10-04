@@ -63,6 +63,7 @@ class AutoTheme(plugin.MenuItem):
         # theme_variant = settings.get_property('gtk-application-prefer-dark-theme')
         # print('--theme_name:', theme_name, theme_variant)
 
+        ## TODO: can't distinguish dark_theme/prefer_dark OR theme_variant
         def _on_theme_name_changed(settings, gparam):
             print('--_on_theme_name_changed:', settings, gparam)
             theme_name = settings.get_property('gtk-theme-name')
@@ -130,7 +131,7 @@ class AutoTheme(plugin.MenuItem):
         cls.dark  = cfg.get('dark',  cur_profile)
         cls.mode  = cfg.get('mode', 'Auto')
         cls.variant = cfg.get('variant', 'auto')
-        print('=== load_config:', cls.light, cls.dark, cls.mode)
+        print('=== load_config:', cls.light, cls.dark, cls.mode, cls.variant)
 
     @classmethod
     def do_menu_toggle(cls, _widget, terminal):
@@ -157,7 +158,8 @@ class MySettingDialog(Gtk.Dialog):
 
         self.light_sel = ''
         self.dark_sel = ''
-        self.mode_sel = ''
+        self.mode_sel = mgr.mode
+        self.variant_sel = mgr.variant
         self.list = []
         self.mgr = mgr
 
@@ -257,7 +259,7 @@ class MySettingDialog(Gtk.Dialog):
         self.variant_auto.set_active(True)
 
         style_manager = Handy.StyleManager.get_default()
-        style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
+        # style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
         button_box2 = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
         # button_box2.set_layout(Gtk.ButtonBoxStyle.START)
         button_box2.set_layout(Gtk.ButtonBoxStyle.EXPAND)
@@ -273,9 +275,6 @@ class MySettingDialog(Gtk.Dialog):
         grid.attach(button_box2, 1, 4, 1, 1)
         grid.attach(theme_label, 0, 4, 1, 1)
 
-        self.variant_light.connect("toggled", self.on_variant_button_toggled)
-        self.variant_dark.connect( "toggled", self.on_variant_button_toggled)
-        self.variant_auto.connect( "toggled", self.on_variant_button_toggled)
 
 
         ### --------- init values
@@ -285,12 +284,17 @@ class MySettingDialog(Gtk.Dialog):
         self.set_variant_sel(mgr.variant)
 
         mgr.change_cb = self.change_cb
-        ### --------- radio onchange
 
+        ### --------- variant onchange
+        self.variant_light.connect("toggled", self.on_variant_button_toggled)
+        self.variant_dark.connect( "toggled", self.on_variant_button_toggled)
+        self.variant_auto.connect( "toggled", self.on_variant_button_toggled)
+
+        ### --------- combox onchange
         self.light_combo.connect('changed', self.on_light_combo_change)
         self.dark_combo.connect('changed',  self.on_dark_combo_change)
 
-        # In the __init__ method, connect the toggle signal
+        ### --------- readio onchange
         self.radio_light.connect("toggled", self.on_radio_button_toggled)
         self.radio_dark.connect("toggled",  self.on_radio_button_toggled)
         self.radio_auto.connect("toggled",  self.on_radio_button_toggled)
