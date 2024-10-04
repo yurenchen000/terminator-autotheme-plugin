@@ -27,7 +27,7 @@ from gi.repository import Handy
 AVAILABLE = ['AutoTheme']
 
 ## disable log
-print = lambda *a:None
+# print = lambda *a:None
 
 """Terminator Plugin AutoTheme"""
 class AutoTheme(plugin.MenuItem):
@@ -37,6 +37,7 @@ class AutoTheme(plugin.MenuItem):
     light = ''
     dark = ''
     mode = ''
+    variant = ''
     list = []
     change_cb = None
 
@@ -46,6 +47,9 @@ class AutoTheme(plugin.MenuItem):
         plugin.MenuItem.__init__(self)
         self.__class__.load_config()
         self.setup_theme_monitor()
+
+        style_manager = Handy.StyleManager.get_default()
+        style_manager.set_color_scheme(self.__class__.to_variant(self.variant))
 
     ## on menu_show
     def callback(self, menuitems, menu, terminal):
@@ -109,6 +113,16 @@ class AutoTheme(plugin.MenuItem):
         theme = AutoTheme.dark if isdark else AutoTheme.light
         print('--change_theme:', isdark, theme)
         AutoTheme.apply_theme(theme)
+
+
+    @classmethod
+    def to_variant(cls, scheme):
+        if scheme == 'light':  ## will mess up on_theme_change values
+            return Handy.ColorScheme.FORCE_LIGHT
+        elif scheme == 'dark':
+            return Handy.ColorScheme.FORCE_DARK
+        else:  ## system
+            return Handy.ColorScheme.PREFER_LIGHT
 
     @classmethod
     def save_config(cls, light, dark, mode, variant):
@@ -258,7 +272,8 @@ class MySettingDialog(Gtk.Dialog):
         self.variant_auto.set_mode(False)
         self.variant_auto.set_active(True)
 
-        style_manager = Handy.StyleManager.get_default()
+        # style_manager = Handy.StyleManager.get_default()
+        # style_manager.set_color_scheme(mgr.to_variant(self.variant_sel))
         # style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
         button_box2 = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
         # button_box2.set_layout(Gtk.ButtonBoxStyle.START)
