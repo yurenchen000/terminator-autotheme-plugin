@@ -244,17 +244,6 @@ class MySettingDialog(Gtk.Dialog):
 
 
         ### --------- row4: theme variant
-        def on_variant_combox_changed(combo):
-            scheme = combo.get_active_text().lower()
-            style_manager = Handy.StyleManager.get_default()
-            print('--on_variant_change:', scheme)
-            if scheme == 'light':
-                style_manager.set_color_scheme(Handy.ColorScheme.FORCE_LIGHT)
-            elif scheme == 'dark':
-                style_manager.set_color_scheme(Handy.ColorScheme.FORCE_DARK)
-            else:  ## system
-                style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
-
         ## NOTE: set_color_scheme will change notify::gtk-theme-name event behivor
         def on_variant_button_toggled(widget):
             if not widget.get_active():
@@ -274,14 +263,6 @@ class MySettingDialog(Gtk.Dialog):
 
             self.mgr.setup_theme_monitor()
 
-        #### ---- use combox
-        # variant_combo = Gtk.ComboBoxText()
-        # variant_combo.append_text("System")
-        # variant_combo.append_text("Light")
-        # variant_combo.append_text("Dark")
-        # variant_combo.set_active(0)
-        # variant_combo.connect("changed", on_variant_combox_changed)
-
         #### ---- use radio
         self.variant_light = Gtk.RadioButton.new_with_label_from_widget(None, "Light")
         self.variant_dark  = Gtk.RadioButton.new_with_label_from_widget(self.variant_light, "Dark")
@@ -295,7 +276,6 @@ class MySettingDialog(Gtk.Dialog):
 
         style_manager = Handy.StyleManager.get_default()
         style_manager.set_color_scheme(Handy.ColorScheme.PREFER_LIGHT)
-        # button_box2 = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=5)
         button_box2 = Gtk.ButtonBox.new(Gtk.Orientation.HORIZONTAL)
         # button_box2.set_layout(Gtk.ButtonBoxStyle.START)
         button_box2.set_layout(Gtk.ButtonBoxStyle.EXPAND)
@@ -306,10 +286,8 @@ class MySettingDialog(Gtk.Dialog):
         button_box2.pack_start(self.variant_dark,  True, True, 0)
         button_box2.pack_start(self.variant_auto,  True, True, 0)
 
-        # vbox.pack_start(dark_theme_combo, False, True, 0)
         theme_label = Gtk.Label(label="Gtk")
         theme_label.set_tooltip_text('for UI')
-        # grid.attach(variant_combo, 1, 4, 1, 1)
         grid.attach(button_box2, 1, 4, 1, 1)
         grid.attach(theme_label, 0, 4, 1, 1)
 
