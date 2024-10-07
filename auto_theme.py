@@ -61,7 +61,7 @@ class AutoTheme(plugin.MenuItem):
         mode = AutoTheme.mode=='Dark' or AutoTheme.mode=='Auto' and AutoTheme.is_dark_theme()
         print('load mode:', mode)
         AutoTheme.change_theme(mode)
-        
+
         ## load variant stat
         self.teardown_theme_monitor()  ## don't mess up with terminal profile
         style_manager = Handy.StyleManager.get_default()
@@ -82,6 +82,10 @@ class AutoTheme(plugin.MenuItem):
             theme_name = settings.get_property('gtk-theme-name')
             theme_variant = settings.get_property('gtk-application-prefer-dark-theme')
             print('== on_theme_name change:', theme_name, theme_variant)
+            if  AutoTheme.mode != 'Auto':
+                print('vte mode: not auto, not auto change:', AutoTheme.mode)
+                return
+
             # is_dark = 'dark' in theme_name
             is_dark = 'dark' in theme_name or theme_variant  ## set_color_scheme affect this
             AutoTheme.change_theme(is_dark)
@@ -417,6 +421,8 @@ class MySettingDialog(Gtk.Dialog):
                 self.box.set_name(theme_mode) # css active
 
             theme_name = self.dark_combo.get_active_text() if theme_mode == 'Dark' else self.light_combo.get_active_text()
+            self.mgr.mode = self.mode_sel  ## TODO: just teardown_theme_monitor
+            # print('--cls:', self.mgr, AutoTheme, self.mgr == AutoTheme, AutoTheme.mode)
             self.mgr.apply_theme(theme_name)
 
     ## NOTE: set_color_scheme will change notify::gtk-theme-name event behivor
