@@ -48,6 +48,22 @@ class AutoTheme(plugin.MenuItem):
         self.__class__.load_config()
         self.setup_theme_monitor()
 
+        def delay_init():
+            print("----- auto_theme delay_init")
+
+            ## load mode stat
+            mode = AutoTheme.mode=='Dark' or AutoTheme.mode=='Auto' and AutoTheme.is_dark_theme()
+            print('load mode:', mode)
+            AutoTheme.change_theme(mode)
+
+        def setup_timeout(delay_ms, callback):
+            import gi
+            gi.require_version('Gtk', '3.0')
+            from gi.repository import GLib
+            GLib.timeout_add(delay_ms, callback)
+
+        setup_timeout(500, delay_init)  # wait ui ready, rudely delay 500ms; TODO: find a better hook point
+
     ## on menu_show
     def callback(self, menuitems, menu, terminal):
         item = Gtk.CheckMenuItem(_(' -  AutoTheme'))
