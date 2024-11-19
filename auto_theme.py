@@ -56,6 +56,12 @@ class AutoTheme(plugin.MenuItem):
             print('load mode:', mode)
             AutoTheme.change_theme(mode)
 
+            ## load variant stat
+            self.teardown_theme_monitor()  ## don't mess up with terminal profile
+            style_manager = Handy.StyleManager.get_default()
+            style_manager.set_color_scheme(AutoTheme.to_variant(AutoTheme.variant))
+            self.setup_theme_monitor()
+
         def setup_timeout(delay_ms, callback):
             import gi
             gi.require_version('Gtk', '3.0')
@@ -79,6 +85,7 @@ class AutoTheme(plugin.MenuItem):
         AutoTheme.change_theme(mode)
 
         ## load variant stat
+        ## BUG: Gtk:non-auto will Interference Vte:auto detect, Cannot completely avoided yet
         self.teardown_theme_monitor()  ## don't mess up with terminal profile
         style_manager = Handy.StyleManager.get_default()
         style_manager.set_color_scheme(AutoTheme.to_variant(AutoTheme.variant))
