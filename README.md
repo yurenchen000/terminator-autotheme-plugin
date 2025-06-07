@@ -30,3 +30,8 @@ It will auto switch when system dark/light mode swtich.
 ## Preview
 
 ![plugin_preview.png](https://i.imgur.com/q1pUomB.png)
+
+
+## Other Plugins
+
+[![related-repos](https://res.ez2.fun/svg/repos-terminator_plugin.svg)](https://github.com/yurenchen000/yurenchen000/blob/main/repos.md#terminator-plugins)
