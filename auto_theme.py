@@ -68,7 +68,8 @@ class AutoTheme(plugin.MenuItem):
             from gi.repository import GLib
             GLib.timeout_add(delay_ms, callback)
 
-        setup_timeout(500, delay_init)  # wait ui ready, rudely delay 500ms; TODO: find a better hook point
+        setup_timeout(100, delay_init)  # wait ui ready, rudely delay 500ms; TODO: find a better hook point
+        setup_timeout(110, delay_init)  # As a workaround, second call solves the issue #4
 
     ## on menu_show
     def callback(self, menuitems, menu, terminal):
