@@ -16,7 +16,8 @@ only tested with terminator 2.1.1+, on ubuntu 22 lts
 
 <br>
 
-> NOTE: This plugin is implemented in a hack way.  
+> [!NOTE]
+> This plugin is implemented in a hack way.  
   if it not work, check the [issues](https://github.com/yurenchen000/terminator-autotheme-plugin/issues)
 
 <br>
@@ -36,7 +37,7 @@ It will auto switch when system dark/light mode swtich.
 
 ## Preview
 
-![plugin_preview.png](https://i.imgur.com/q1pUomB.png)
+![pzlugin_preview.png](https://i.imgur.com/q1pUomB.png)
 
 [more preview](https://github.com/yurenchen000/terminator-autotheme-plugin/wiki)
 
