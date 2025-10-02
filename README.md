@@ -5,6 +5,12 @@ A Terminator plugin to implement AutoTheme:
 
 https://github.com/gnome-terminator/terminator/issues/775
 
+<br>
+
+> [!TIP]
+> This plugin has been included in the official repository: 
+>   [./terminatorlib/plugins/auto_theme.py](https://github.com/gnome-terminator/terminator/blob/master/terminatorlib/plugins/auto_theme.py)
+
 ## Feature
 - auto switch profile when system light/dark change
 - quick preview different profiles (without tedious clicks)  
